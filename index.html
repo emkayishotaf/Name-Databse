@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Experience a personalized, visually stunning welcome inside a virtual desktop monitor linked to a Supabase database.">
+    <title>AuraGreet | Supabase Monitor Experience</title>
+    
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Animated background mesh -->
+    <div class="bg-gradient-mesh" aria-hidden="true"></div>
+
+    <!-- Main Container -->
+    <main class="app-container">
+        <!-- Desk Surface Container -->
+        <div class="workspace-setup">
+            <!-- 1. The Computer Monitor -->
+            <div class="computer-monitor">
+                <!-- Monitor Screen Viewport -->
+                <div class="monitor-screen">
+                    <div class="screen-glow-fx"></div>
+                    <div class="screen-content">
+                        <!-- Top Header Status -->
+                        <div class="screen-status-bar">
+                            <span class="status-indicator connected" id="status-indicator"></span>
+                            <span class="status-text" id="status-text">SUPABASE: MOCKED (LOCAL)</span>
+                        </div>
+
+                        <!-- Prompt Screen Form -->
+                        <div class="prompt-view">
+                            <label for="user-name" class="monitor-label">What is your name:</label>
+                            
+                            <!-- Printed Name Output (just below the question) -->
+                            <div class="greeting-display" id="greeting-display">
+                                <span class="hello-label">Hello</span>
+                                <span class="displayed-name wavy-underline" id="displayed-name">Guest</span>
+                            </div>
+
+                            <form id="greeting-form" class="monitor-form" novalidate>
+                                <div class="terminal-input-wrapper">
+                                    <span class="terminal-prompt">&gt;</span>
+                                    <input type="text" id="user-name" name="userName" required autocomplete="off" placeholder="type name..." maxlength="20">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Monitor Bezel Controls -->
+                <div class="monitor-bezel-bottom">
+                    <div class="power-led animate-pulse"></div>
+                </div>
+            </div>
+
+            <!-- 2. Monitor Stand -->
+            <div class="monitor-stand-neck"></div>
+            <div class="monitor-stand-base"></div>
+
+            <!-- 3. Desktop Keyboard & Mouse -->
+            <div class="desktop-accessories">
+                <!-- Keyboard Mockup -->
+                <div class="keyboard-mock">
+                    <div class="keyboard-keys">
+                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                
+                <!-- Mouse Mockup with Cable -->
+                <div class="mouse-wrapper">
+                    <div class="mouse-cable"></div>
+                    <div class="mouse-mock">
+                        <div class="mouse-scroll"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Supabase Integration Panel -->
+        <section class="supabase-panel glassmorphic">
+            <header class="supabase-header">
+                <div class="supabase-logo">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" class="supabase-icon">
+                        <path d="M12 2L2 13h9v9l10-11h-9z" />
+                    </svg>
+                    <h2>supabase</h2>
+                </div>
+                <span class="database-badge" id="db-badge">Local Database</span>
+            </header>
+            
+            <div class="supabase-status-info">
+                <p id="supabase-hint">Running in sandbox mode. Enter your API credentials in <code class="code-file">config.js</code> to connect a real database.</p>
+            </div>
+
+            <!-- Log Entries List -->
+            <div class="entries-log">
+                <h3>Greeted Users Database Log:</h3>
+                <div class="log-table-container">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-entries-list">
+                            <!-- Populated dynamically -->
+                            <tr class="empty-row">
+                                <td colspan="3">No names entered yet. Be the first!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Supabase Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Config and App script -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
