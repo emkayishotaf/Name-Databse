@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>End-to-End Data Journey: Keystroke to Supabase Cloud Database</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+        
+        :root {
+            --primary: #3ecf8e;
+            --primary-dark: #2eaf76;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        /* Print styling rules */
+        @media print {
+            body {
+                padding: 0;
+                font-size: 11pt;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 12px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin-top: 2em;
+        }
+
+        p {
+            margin: 0 0 1.25em;
+            color: var(--text-muted);
+        }
+
+        /* Diagram / Flowchart Styling */
+        .diagram-container {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .flow-step:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .step-badge {
+            background-color: var(--primary);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            margin-right: 16px;
+            margin-top: 2px;
+        }
+
+        .step-content h4 {
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .step-content p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .flow-direction {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        /* Code formatting */
+        pre {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            margin: 16px 0;
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            background-color: var(--bg-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #d946ef;
+        }
+
+        pre code {
+            padding: 0;
+            background-color: transparent;
+            color: var(--text-dark);
+        }
+
+        /* Tables styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--bg-light);
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        tr:nth-child(even) td {
+            background-color: rgba(248, 250, 252, 0.5);
+        }
+
+        /* Footer/Header branding */
+        .doc-footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .badge-supabase {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>AuraGreet Data Journey</h1>
+        <p>A comprehensive end-to-end technical overview detailing data transit, storage execution layers, API proxies, and UI rendering mechanics.</p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURE FLOW -->
+    <section>
+        <h2>1. Complete Traffic Flow Overview</h2>
+        <p>The sequence below traces the logical path of data transactions during name storage operations:</p>
+        
+        <div class="diagram-container">
+            <div class="flow-step">
+                <div class="step-badge">1</div>
+                <div class="step-content">
+                    <span class="flow-direction">User → Keyboard Event</span>
+                    <h4>Keystroke Triggers HTML Event</h4>
+                    <p>The physical keyboard keys are registered by the browser, firing client-side JavaScript input handlers to update the monitor greeting live.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-badge">2</div>
+                <div class="step-content">
+                    <span class="flow-direction">Frontend → Network</span>
+                    <h4>Form Intercept & API Serialization</h4>
+                    <p>Pressing enter locks the input. The Supabase JS Client serializes the string name into a JSON array, signing the package with the Anon JWT bearer token.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-badge">3</div>
+                <div class="step-content">
+                    <span class="flow-direction">Network → Kong API Gateway</span>
+                    <h4>Gateway Authentication & CORS Inspection</h4>
+                    <p>The encrypted HTTPS request lands on Kong. The API gateway verifies access permissions, CORS configurations, and token signatures.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-badge">4</div>
+                <div class="step-content">
+                    <span class="flow-direction">Kong Gateway → PostgREST Engine</span>
+                    <h4>REST API Endpoint to SQL Translation</h4>
+                    <p>PostgREST translates the JSON headers and REST routes into standard SQL insert statements, maintaining PostgreSQL database transaction logs.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-badge">5</div>
+                <div class="step-content">
+                    <span class="flow-direction">PostgREST → Database (PostgreSQL)</span>
+                    <h4>Row Level Security (RLS) & Storage Commit</h4>
+                    <p>PostgreSQL runs the query against the <code>Allow public read and insert</code> RLS rule. If allowed, it generates a sequential primary ID and writes the row to the Write-Ahead Log (WAL) on disk.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-badge">6</div>
+                <div class="step-content">
+                    <span class="flow-direction">Database → Frontend Client</span>
+                    <h4>Response Callback & UI Redraw</h4>
+                    <p>A success status is returned. The frontend client triggers a refresh query, downloads the latest 10 logs, and redraws the data logger rows on the same screen.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 2: FRONTEND -->
+    <section>
+        <h2>2. Frontend Client Mechanics</h2>
+        <p>The client side acts as the interface, executing capture operations in three main phases:</p>
+        
+        <h3>A. Keystroke Listening</h3>
+        <p>The application registers user input live as they type. Inside <code>app.js</code>, an event listener hooks into the input element:</p>
+        <pre><code>userNameInput.addEventListener('input', (e) => {
+    const textValue = e.target.value;
+    if (textValue.trim().length === 0) {
+        displayedName.textContent = "Guest";
+        return;
+    }
+    displayedName.textContent = textValue;
+});</code></pre>
+
+        <h3>B. Serialization</h3>
+        <p>Upon submission, the text is extracted, sanitized, and serialized into JSON. The Supabase SDK structures the data package for transfer:</p>
+        <pre><code>// Client-side payload packaging
+const insertRow = { Name: "John" };
+await supabaseClient.from("Customer Names").insert([insertRow]);</code></pre>
+
+        <h3>C. Dynamic Rendering</h3>
+        <p>After logging names, JavaScript executes a query to read the logs. It formats the server datetime stamps, sanitizes names to prevent script injection attacks (XSS), and dynamically inserts table markup elements.</p>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 3: BACKEND API GATEWAY -->
+    <section>
+        <h2>3. Backend Infrastructure (Supabase API Gateway)</h2>
+        <p>Supabase abstracts the backend layer using a dedicated container architecture that acts as a proxy proxying REST transactions to PostgreSQL:</p>
+        
+        <h3>A. Kong API Gateway</h3>
+        <p>Kong is the first layer of contact for the web application. It acts as a gatekeeper, verifying that incoming HTTPS requests contain a valid project API key. It parses request metadata, confirms CORS origins, and enforces rate limit controls.</p>
+        
+        <h3>B. PostgREST Translation</h3>
+        <p>Because relational databases communicate natively via SQL, web browsers cannot query Postgres directly. PostgREST bridges this gap by automatically converting HTTP requests into SQL commands. For example:</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>HTTP Method</th>
+                    <th>API URL Endpoint</th>
+                    <th>PostgreSQL SQL Translation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>POST</code></td>
+                    <td><code>/rest/v1/Customer%20Names</code></td>
+                    <td><code>INSERT INTO public."Customer Names" ("Name") VALUES ('NameValue');</code></td>
+                </tr>
+                <tr>
+                    <td><code>GET</code></td>
+                    <td><code>/rest/v1/Customer%20Names?limit=10</code></td>
+                    <td><code>SELECT * FROM public."Customer Names" LIMIT 10;</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 4: DATABASE ENGINE -->
+    <section>
+        <h2>4. Cloud Database Engine (PostgreSQL)</h2>
+        <p>At the final stage, data enters the PostgreSQL relational database engine which manages execution, integrity, and safety:</p>
+        
+        <h3>A. Row Level Security (RLS) Filter</h3>
+        <p>Before any insertion happens, PostgreSQL inspects permissions. Because RLS is active on the <code>Customer Names</code> table, the database checks the query against your security policy:</p>
+        <pre><code>-- The SQL policy validating public access
+CREATE POLICY "Allow public read and insert" 
+ON "Customer Names" 
+FOR ALL 
+TO public 
+USING (true) 
+WITH CHECK (true);</code></pre>
+        <p>This allows anonymous public connections (authenticated via the JWT key) to safely execute both insert and read operations.</p>
+
+        <h3>B. Transaction Execution</h3>
+        <p>Once allowed, the database opens a secure transaction. It appends the operation to the <strong>Write-Ahead Log (WAL)</strong> on disk to guarantee transaction safety (Durability). Finally, it writes the record, populates the primary ID sequence, stamps the current server timestamp via <code>now()</code>, and commits the transaction.</p>
+    </section>
+
+    <footer class="doc-footer">
+        <div>Document Type: Technical Data Flow Spec</div>
+        <div>DB Status: <span class="badge-supabase">Supabase PostgreSQL Connected</span></div>
+    </footer>
+
+</body>
+</html>
