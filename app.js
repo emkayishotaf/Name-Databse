@@ -175,19 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Live Input Event Listeners
     // -------------------------------------------------------------
 
-    userNameInput.addEventListener('input', (e) => {
-        const textValue = e.target.value;
-        
-        if (textValue.trim().length === 0) {
-            displayedName.textContent = "Guest";
-            return;
-        }
-
-        // Live update on screen as user types
-        displayedName.textContent = textValue;
-    });
-
-    // Form submission triggers permanent DB logging
+    // Form submission triggers permanent DB logging & display update
     greetingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -198,6 +186,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Save to DB
         await saveName(cleanedName);
+        
+        // Update the display text box with the typed name only after submit
+        displayedName.textContent = cleanedName;
+
+        // Save to localStorage to remember user on subsequent visits
+        localStorage.setItem('saved_guest_name', cleanedName);
         
         // Trigger a screen flash effect on monitor bezel/screen
         const screen = document.querySelector('.monitor-screen');
@@ -212,16 +206,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Reset input focus and values
         userNameInput.value = '';
         userNameInput.blur();
-        
-        // Wait a few seconds then revert hello display back to "Guest"
-        setTimeout(() => {
-            if (userNameInput.value.length === 0) {
-                displayedName.textContent = "Guest";
-            }
-        }, 4000);
     });
 
     // Run Setup
     initializeDB();
+    
+    // Check if the user was previously remembered
+    const savedName = localStorage.getItem('saved_guest_name');
+    if (savedName) {
+        displayedName.textContent = savedName;
+    } else {
+        displayedName.textContent = "Guest";
+    }
+
     await loadLogs();
 });

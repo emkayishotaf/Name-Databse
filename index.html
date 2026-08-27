@@ -45,9 +45,14 @@
                             </div>
 
                             <form id="greeting-form" class="monitor-form" novalidate>
-                                <div class="terminal-input-wrapper">
-                                    <span class="terminal-prompt">&gt;</span>
-                                    <input type="text" id="user-name" name="userName" required autocomplete="off" placeholder="type name..." maxlength="20">
+                                <div class="terminal-input-row">
+                                    <div class="terminal-input-wrapper">
+                                        <span class="terminal-prompt">&gt;</span>
+                                        <input type="text" id="user-name" name="userName" required autocomplete="off" placeholder="type name..." maxlength="20">
+                                    </div>
+                                    <button type="submit" id="submit-btn" class="terminal-submit-btn">
+                                        <span>Submit</span>
+                                    </button>
                                 </div>
                             </form>
                         </div>
