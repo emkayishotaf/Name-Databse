@@ -118,30 +118,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Save Name to database / localstorage
     async function saveName(name) {
-        if (!name || name.trim().length === 0) return;
+        if (!name || name.trim().length === 0) return null;
         const cleanedName = name.trim();
         const tableName = SUPABASE_CONFIG.TABLE_NAME || 'greetings';
         const columnName = SUPABASE_CONFIG.COLUMN_NAME || 'name';
+
+        let savedName = cleanedName;
 
         if (isSupabaseActive) {
             try {
                 const insertRow = {};
                 insertRow[columnName] = cleanedName;
 
-                const { error } = await supabaseClient
+                // .select() returns the newly created row from the database
+                const { data, error } = await supabaseClient
                     .from(tableName)
-                    .insert([insertRow]);
+                    .insert([insertRow])
+                    .select();
                 if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    savedName = data[0][columnName];
+                }
             } catch (err) {
                 console.error("Failed to insert to Supabase, saving locally:", err);
-                saveLocally(cleanedName);
+                const localEntry = saveLocally(cleanedName);
+                savedName = localEntry.name;
             }
         } else {
-            saveLocally(cleanedName);
+            const localEntry = saveLocally(cleanedName);
+            savedName = localEntry.name;
         }
 
         // Reload lists
         await loadLogs();
+        return savedName;
     }
 
     function saveLocally(name) {
@@ -156,6 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             localDatabase.pop();
         }
         localStorage.setItem('aura_greetings', JSON.stringify(localDatabase));
+        return newEntry;
     }
 
     // Helper: Escape HTML to prevent injection
@@ -184,14 +196,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (cleanedName.length === 0) return;
         
-        // Save to DB
-        await saveName(cleanedName);
+        // Save to DB and retrieve the actual name committed by the database
+        const savedNameFromDB = await saveName(cleanedName);
         
-        // Update the display text box with the typed name only after submit
-        displayedName.textContent = cleanedName;
+        if (savedNameFromDB) {
+            // Update the display text box with the name returned by the database
+            displayedName.textContent = savedNameFromDB;
 
-        // Save to localStorage to remember user on subsequent visits
-        localStorage.setItem('saved_guest_name', cleanedName);
+            // Save the database-verified name to localStorage to remember user
+            localStorage.setItem('saved_guest_name', savedNameFromDB);
+        }
         
         // Trigger a screen flash effect on monitor bezel/screen
         const screen = document.querySelector('.monitor-screen');

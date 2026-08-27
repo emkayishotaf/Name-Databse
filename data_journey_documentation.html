@@ -205,7 +205,7 @@
 
     <header>
         <h1>AuraGreet Data Journey</h1>
-        <p>A comprehensive end-to-end technical overview detailing data transit, storage execution layers, API proxies, and UI rendering mechanics.</p>
+        <p>A comprehensive end-to-end technical overview detailing data transit, storage execution layers, API proxies, and local storage state persistence.</p>
     </header>
 
     <!-- SECTION 1: ARCHITECTURE FLOW -->
@@ -217,23 +217,32 @@
             <div class="flow-step">
                 <div class="step-badge">1</div>
                 <div class="step-content">
-                    <span class="flow-direction">User → Keyboard Event</span>
-                    <h4>Keystroke Triggers HTML Event</h4>
-                    <p>The physical keyboard keys are registered by the browser, firing client-side JavaScript input handlers to update the monitor greeting live.</p>
+                    <span class="flow-direction">Browser → LocalStorage</span>
+                    <h4>State Hydration on Load</h4>
+                    <p>When the page loads, the frontend reads <code>saved_guest_name</code> from LocalStorage. If found, the screen immediately renders "Hello [Name]" instead of "Hello Guest".</p>
                 </div>
             </div>
 
             <div class="flow-step">
                 <div class="step-badge">2</div>
                 <div class="step-content">
-                    <span class="flow-direction">Frontend → Network</span>
-                    <h4>Form Intercept & API Serialization</h4>
-                    <p>Pressing enter locks the input. The Supabase JS Client serializes the string name into a JSON array, signing the package with the Anon JWT bearer token.</p>
+                    <span class="flow-direction">User Input → Input Buffer</span>
+                    <h4>Isolated Keystroke Buffering</h4>
+                    <p>As the user types, characters accumulate in the text field buffer. The visual screen greeting remains unchanged until submission to keep the interface polished.</p>
                 </div>
             </div>
 
             <div class="flow-step">
                 <div class="step-badge">3</div>
+                <div class="step-content">
+                    <span class="flow-direction">User Submit → Network & Local Verification</span>
+                    <h4>Cloud Query Response & Display</h4>
+                    <p>Clicking Submit or hitting Enter intercepts the event. The frontend fires the HTTPS POST request (with a <code>.select()</code> payload request). When the database responds with the saved row, the frontend pulls the name from the response, displays it on the screen, and commits it to LocalStorage.</p>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-badge">4</div>
                 <div class="step-content">
                     <span class="flow-direction">Network → Kong API Gateway</span>
                     <h4>Gateway Authentication & CORS Inspection</h4>
@@ -242,7 +251,7 @@
             </div>
 
             <div class="flow-step">
-                <div class="step-badge">4</div>
+                <div class="step-badge">5</div>
                 <div class="step-content">
                     <span class="flow-direction">Kong Gateway → PostgREST Engine</span>
                     <h4>REST API Endpoint to SQL Translation</h4>
@@ -251,20 +260,11 @@
             </div>
 
             <div class="flow-step">
-                <div class="step-badge">5</div>
+                <div class="step-badge">6</div>
                 <div class="step-content">
                     <span class="flow-direction">PostgREST → Database (PostgreSQL)</span>
                     <h4>Row Level Security (RLS) & Storage Commit</h4>
                     <p>PostgreSQL runs the query against the <code>Allow public read and insert</code> RLS rule. If allowed, it generates a sequential primary ID and writes the row to the Write-Ahead Log (WAL) on disk.</p>
-                </div>
-            </div>
-
-            <div class="flow-step">
-                <div class="step-badge">6</div>
-                <div class="step-content">
-                    <span class="flow-direction">Database → Frontend Client</span>
-                    <h4>Response Callback & UI Redraw</h4>
-                    <p>A success status is returned. The frontend client triggers a refresh query, downloads the latest 10 logs, and redraws the data logger rows on the same screen.</p>
                 </div>
             </div>
         </div>
@@ -277,22 +277,29 @@
         <h2>2. Frontend Client Mechanics</h2>
         <p>The client side acts as the interface, executing capture operations in three main phases:</p>
         
-        <h3>A. Keystroke Listening</h3>
-        <p>The application registers user input live as they type. Inside <code>app.js</code>, an event listener hooks into the input element:</p>
-        <pre><code>userNameInput.addEventListener('input', (e) => {
-    const textValue = e.target.value;
-    if (textValue.trim().length === 0) {
-        displayedName.textContent = "Guest";
-        return;
-    }
-    displayedName.textContent = textValue;
-});</code></pre>
+        <h3>A. Local State Hydration</h3>
+        <p>The application checks for cached visitor names upon initialization:</p>
+        <pre><code>const savedName = localStorage.getItem('saved_guest_name');
+if (savedName) {
+    displayedName.textContent = savedName;
+} else {
+    displayedName.textContent = "Guest";
+}</code></pre>
 
-        <h3>B. Serialization</h3>
-        <p>Upon submission, the text is extracted, sanitized, and serialized into JSON. The Supabase SDK structures the data package for transfer:</p>
-        <pre><code>// Client-side payload packaging
-const insertRow = { Name: "John" };
-await supabaseClient.from("Customer Names").insert([insertRow]);</code></pre>
+        <h3>B. Submission Commit</h3>
+        <p>Upon clicking Submit or pressing Enter, the text is sent to the cloud, and the database response is verified before printing to the screen:</p>
+        <pre><code>greetingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cleanedName = userNameInput.value.trim();
+    if (cleanedName.length === 0) return;
+    
+    // Save to DB and retrieve the actual name returned by the database response
+    const savedNameFromDB = await saveName(cleanedName);
+    if (savedNameFromDB) {
+        displayedName.textContent = savedNameFromDB;
+        localStorage.setItem('saved_guest_name', savedNameFromDB);
+    }
+});</code></pre>
 
         <h3>C. Dynamic Rendering</h3>
         <p>After logging names, JavaScript executes a query to read the logs. It formats the server datetime stamps, sanitizes names to prevent script injection attacks (XSS), and dynamically inserts table markup elements.</p>
