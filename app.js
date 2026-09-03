@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let supabaseClient = null;
     let isSupabaseActive = false;
     let localDatabase = JSON.parse(localStorage.getItem('aura_greetings') || '[]');
+    let latestDbName = null;
 
     // Initialize Database Connection
     function initializeDB() {
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         supabaseHint.innerHTML = "Running in sandbox mode. Enter your API credentials in <code class='code-file'>config.js</code> to connect a real database.";
     }
 
-    // Fetch and render the table logs
+    // Fetch and render the table logs (GET request to database)
     async function loadLogs() {
         let entries = [];
         const tableName = SUPABASE_CONFIG.TABLE_NAME || 'greetings';
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (isSupabaseActive) {
             try {
+                // HTTP GET request to fetch recent rows from Supabase
                 const { data, error } = await supabaseClient
                     .from(tableName)
                     .select('*')
@@ -86,6 +88,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else {
             entries = localDatabase;
+        }
+
+        // Cache the latest name from the database
+        if (entries.length > 0) {
+            latestDbName = entries[0][columnName] || entries[0].name || null;
+        } else {
+            latestDbName = null;
+        }
+
+        // For as long as there is a name in the database, display it unless the user is typing
+        if (userNameInput.value.trim().length === 0) {
+            displayedName.textContent = latestDbName || "Guest";
         }
 
         // Render to Table
@@ -123,36 +137,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tableName = SUPABASE_CONFIG.TABLE_NAME || 'greetings';
         const columnName = SUPABASE_CONFIG.COLUMN_NAME || 'name';
 
-        let savedName = cleanedName;
-
         if (isSupabaseActive) {
             try {
                 const insertRow = {};
                 insertRow[columnName] = cleanedName;
 
-                // .select() returns the newly created row from the database
-                const { data, error } = await supabaseClient
+                // Insert into database (POST)
+                const { error } = await supabaseClient
                     .from(tableName)
-                    .insert([insertRow])
-                    .select();
+                    .insert([insertRow]);
                 if (error) throw error;
-                
-                if (data && data.length > 0) {
-                    savedName = data[0][columnName];
-                }
             } catch (err) {
                 console.error("Failed to insert to Supabase, saving locally:", err);
-                const localEntry = saveLocally(cleanedName);
-                savedName = localEntry.name;
+                saveLocally(cleanedName);
             }
         } else {
-            const localEntry = saveLocally(cleanedName);
-            savedName = localEntry.name;
+            saveLocally(cleanedName);
         }
 
-        // Reload lists
+        // Reload lists via HTTP GET, which automatically updates latestDbName & displayedName!
         await loadLogs();
-        return savedName;
     }
 
     function saveLocally(name) {
@@ -187,7 +191,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Live Input Event Listeners
     // -------------------------------------------------------------
 
-    // Form submission triggers permanent DB logging & display update
+    // While user is typing a new name, show what they type.
+    // If input is cleared, revert back to the latest name from the database.
+    userNameInput.addEventListener('input', (e) => {
+        const textValue = e.target.value;
+        if (textValue.trim().length === 0) {
+            displayedName.textContent = latestDbName || "Guest";
+        } else {
+            displayedName.textContent = textValue;
+        }
+    });
+
+    // Form submission triggers DB insert (POST), then GETs the latest name
     greetingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -196,16 +211,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (cleanedName.length === 0) return;
         
-        // Save to DB and retrieve the actual name committed by the database
-        const savedNameFromDB = await saveName(cleanedName);
-        
-        if (savedNameFromDB) {
-            // Update the display text box with the name returned by the database
-            displayedName.textContent = savedNameFromDB;
+        // Reset input focus and values so the UI displays the newest DB name
+        userNameInput.value = '';
+        userNameInput.blur();
 
-            // Save the database-verified name to localStorage to remember user
-            localStorage.setItem('saved_guest_name', savedNameFromDB);
-        }
+        // Save to DB (POST), which triggers loadLogs() to GET the latest name
+        await saveName(cleanedName);
         
         // Trigger a screen flash effect on monitor bezel/screen
         const screen = document.querySelector('.monitor-screen');
@@ -216,22 +227,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             screen.style.transition = 'background-color 0.8s ease';
             screen.style.backgroundColor = 'var(--monitor-screen-bg)';
         }, 50);
-
-        // Reset input focus and values
-        userNameInput.value = '';
-        userNameInput.blur();
     });
 
     // Run Setup
     initializeDB();
     
-    // Check if the user was previously remembered
-    const savedName = localStorage.getItem('saved_guest_name');
-    if (savedName) {
-        displayedName.textContent = savedName;
-    } else {
-        displayedName.textContent = "Guest";
-    }
-
+    // On load, execute HTTP GET query to fetch latest name from database and render it
     await loadLogs();
 });
