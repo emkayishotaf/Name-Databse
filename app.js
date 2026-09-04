@@ -17,11 +17,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     // DB Log List
     const dbEntriesList = document.getElementById('db-entries-list');
     const greetingForm = document.getElementById('greeting-form');
+    const terminalError = document.getElementById('terminal-error');
+    const terminalInputWrapper = document.getElementById('terminal-input-wrapper');
 
     let supabaseClient = null;
     let isSupabaseActive = false;
     let localDatabase = JSON.parse(localStorage.getItem('aura_greetings') || '[]');
     let latestDbName = null;
+
+    // -------------------------------------------------------------
+    // Zod Schema Definition
+    // -------------------------------------------------------------
+    const z = window.Zod?.z || window.z || window.Zod;
+
+    // Fallback schema in case CDN is unreachable
+    const FallbackNameSchema = {
+        safeParse: (val) => {
+            if (typeof val !== 'string') return { success: false, error: { errors: [{ message: "Name must be a valid text string." }] } };
+            const trimmed = val.trim();
+            if (trimmed.length < 2) return { success: false, error: { errors: [{ message: "Name must be at least 2 characters long." }] } };
+            if (trimmed.length > 30) return { success: false, error: { errors: [{ message: "Name cannot exceed 30 characters." }] } };
+            if (!/^[a-zA-Z\s'-]+$/.test(trimmed)) return { success: false, error: { errors: [{ message: "Name can only contain letters, spaces, hyphens, and apostrophes." }] } };
+            return { success: true, data: trimmed };
+        }
+    };
+
+    // Declarative Zod Schema matching database constraints
+    const NameSchema = (typeof z !== 'undefined' && z?.string)
+        ? z.string({ required_error: "Name is required." })
+            .trim()
+            .min(2, "Name must be at least 2 characters long.")
+            .max(30, "Name cannot exceed 30 characters.")
+            .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens, and apostrophes.")
+        : FallbackNameSchema;
+
+    function showError(message) {
+        if (terminalError) {
+            terminalError.textContent = `⚠ ${message}`;
+            terminalError.classList.add('visible');
+        }
+        if (terminalInputWrapper) {
+            terminalInputWrapper.classList.remove('input-error');
+            void terminalInputWrapper.offsetWidth; // Trigger reflow for animation restart
+            terminalInputWrapper.classList.add('input-error');
+        }
+    }
+
+    function clearError() {
+        if (terminalError) {
+            terminalError.textContent = '';
+            terminalError.classList.remove('visible');
+        }
+        if (terminalInputWrapper) {
+            terminalInputWrapper.classList.remove('input-error');
+        }
+    }
 
     // Initialize Database Connection
     function initializeDB() {
@@ -194,6 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // While user is typing a new name, show what they type.
     // If input is cleared, revert back to the latest name from the database.
     userNameInput.addEventListener('input', (e) => {
+        clearError(); // Dismiss any previous validation errors as user types
         const textValue = e.target.value;
         if (textValue.trim().length === 0) {
             displayedName.textContent = latestDbName || "Guest";
@@ -202,21 +253,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Form submission triggers DB insert (POST), then GETs the latest name
+    // Form submission triggers Zod schema validation, DB insert (POST), then GETs latest name
     greetingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const textValue = userNameInput.value;
-        const cleanedName = textValue.trim();
+        const rawValue = userNameInput.value;
         
-        if (cleanedName.length === 0) return;
+        // Validate with Zod schema
+        const validation = NameSchema.safeParse(rawValue);
+        
+        if (!validation.success) {
+            // Extract the first error message formatted by Zod
+            const errorMsg = validation.error.errors[0]?.message || "Invalid name entered.";
+            showError(errorMsg);
+            userNameInput.focus();
+            return;
+        }
+
+        // Passed Zod validation! Clear any errors and use the trimmed, sanitized name
+        clearError();
+        const validatedName = validation.data;
         
         // Reset input focus and values so the UI displays the newest DB name
         userNameInput.value = '';
         userNameInput.blur();
 
         // Save to DB (POST), which triggers loadLogs() to GET the latest name
-        await saveName(cleanedName);
+        await saveName(validatedName);
         
         // Trigger a screen flash effect on monitor bezel/screen
         const screen = document.querySelector('.monitor-screen');

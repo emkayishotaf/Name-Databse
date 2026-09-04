@@ -46,14 +46,15 @@
 
                             <form id="greeting-form" class="monitor-form" novalidate>
                                 <div class="terminal-input-row">
-                                    <div class="terminal-input-wrapper">
+                                    <div class="terminal-input-wrapper" id="terminal-input-wrapper">
                                         <span class="terminal-prompt">&gt;</span>
-                                        <input type="text" id="user-name" name="userName" required autocomplete="off" placeholder="type name..." maxlength="20">
+                                        <input type="text" id="user-name" name="userName" required autocomplete="off" placeholder="type name..." maxlength="30">
                                     </div>
                                     <button type="submit" id="submit-btn" class="terminal-submit-btn">
                                         <span>Submit</span>
                                     </button>
                                 </div>
+                                <div class="terminal-error" id="terminal-error"></div>
                             </form>
                         </div>
                     </div>
@@ -129,6 +130,8 @@
         </section>
     </main>
 
+    <!-- Zod Validation Library CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/zod@3.22.4/lib/index.umd.min.js"></script>
     <!-- Supabase Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Config and App script -->

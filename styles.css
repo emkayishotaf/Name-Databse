@@ -182,7 +182,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 8px;
     width: 100%;
 }
 
@@ -195,6 +195,39 @@ body {
     border-radius: 6px;
     padding: 10px 14px;
     flex: 1;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.terminal-input-wrapper.input-error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3) !important;
+    animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
+
+/* Zod Error Banner */
+.terminal-error {
+    font-family: var(--font-code);
+    font-size: 0.8rem;
+    color: #ef4444;
+    min-height: 18px;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.terminal-error.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .terminal-submit-btn {
