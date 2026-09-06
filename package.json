@@ -1,0 +1,14 @@
+{
+  "name": "name-greeter",
+  "version": "1.0.0",
+  "description": "AuraGreet Front-End connected to Supabase PostgreSQL with Zod validation",
+  "type": "module",
+  "scripts": {
+    "generate-docs": "node generate-docs.mjs"
+  },
+  "devDependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "yaml": "^2.6.0",
+    "zod": "^3.23.8"
+  }
+}
