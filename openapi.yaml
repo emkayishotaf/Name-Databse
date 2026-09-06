@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: AuraGreet Customer Names API
+  version: 1.0.0
+  description: REST API specification for logging and retrieving greeted visitor names via Supabase PostgREST.
+
+servers:
+  - url: https://tibxvvjsgkyurxepdnsh.supabase.co/rest/v1
+    description: Supabase Cloud Production Server
+
+# Define authentication headers required by Supabase
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /Customer%20Names:
+    # -------------------------------------------------------------
+    # 1. GET: Fetch Latest Greeted Users
+    # -------------------------------------------------------------
+    get:
+      summary: Get Recent Greeted Names
+      description: Retrieves a list of recently logged customer names ordered by creation date.
+      operationId: getRecentNames
+      parameters:
+        - name: select
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "*"
+          description: Columns to select
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "created_at.desc"
+          description: Ordering criteria
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+          description: Maximum number of rows to return
+
+      responses:
+        "200":
+          description: Successfully retrieved the list of names.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerEntry"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    # -------------------------------------------------------------
+    # 2. POST: Insert a New Name
+    # -------------------------------------------------------------
+    post:
+      summary: Insert a New Customer Name
+      description: Validates and writes a new visitor name into the database.
+      operationId: insertCustomerName
+      parameters:
+        - name: Prefer
+          in: header
+          required: false
+          schema:
+            type: string
+            default: "return=representation"
+          description: Instructs the server to return the newly inserted row.
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/NewCustomerInput"
+
+      responses:
+        "201":
+          description: Name created successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerEntry"
+        "400":
+          description: Bad Request (Failed database constraint or validation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+# -----------------------------------------------------------------
+# Reusable Schemas & Security Components
+# -----------------------------------------------------------------
+components:
+  schemas:
+    # Matches our Zod validation rules and SQL constraint!
+    NewCustomerInput:
+      type: object
+      required:
+        - Name
+      properties:
+        Name:
+          type: string
+          minLength: 2
+          maxLength: 30
+          pattern: "^[a-zA-Z\\s'-]+$"
+          description: Person's name (letters, spaces, hyphens, and apostrophes only).
+          example: "Kelvin"
+
+    CustomerEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Auto-increment primary key
+          example: 19
+        Name:
+          type: string
+          example: "Kelvin"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the row was committed
+          example: "2026-09-04T10:43:25.000Z"
+
+    ApiError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "new row for relation \"Customer Names\" violates check constraint"
+
+  responses:
+    UnauthorizedError:
+      description: Missing or invalid Supabase Anon Key.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Invalid API key"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase Public Anon Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Bearer Token
