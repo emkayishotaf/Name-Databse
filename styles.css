@@ -138,6 +138,27 @@ body {
     margin-bottom: 24px;
 }
 
+.status-docs-link {
+    margin-left: auto;
+    color: var(--accent-cyan);
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-family: var(--font-code);
+    opacity: 0.85;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(6, 182, 212, 0.05);
+}
+
+.status-docs-link:hover {
+    opacity: 1;
+    color: #ffffff;
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+}
+
 .status-indicator {
     width: 6px;
     height: 6px;
