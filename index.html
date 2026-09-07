@@ -46,6 +46,12 @@
                             </div>
 
                             <form id="greeting-form" class="monitor-form" novalidate>
+                                <!-- Honeypot Anti-Bot Trap (Invisible to humans) -->
+                                <div class="hp-trap" aria-hidden="true">
+                                    <label for="website-field">Leave blank</label>
+                                    <input type="text" id="website-field" name="website_url" tabindex="-1" autocomplete="off">
+                                </div>
+
                                 <div class="terminal-input-row">
                                     <div class="terminal-input-wrapper" id="terminal-input-wrapper">
                                         <span class="terminal-prompt">&gt;</span>

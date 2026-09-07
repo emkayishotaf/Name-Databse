@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const greetingForm = document.getElementById('greeting-form');
     const terminalError = document.getElementById('terminal-error');
     const terminalInputWrapper = document.getElementById('terminal-input-wrapper');
+    const websiteField = document.getElementById('website-field');
 
     let supabaseClient = null;
     let isSupabaseActive = false;
@@ -253,10 +254,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Form submission triggers Zod schema validation, DB insert (POST), then GETs latest name
+    // Form submission triggers Honeypot trap check, Zod validation, DB insert (POST), then GETs latest name
     greetingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        // 1. Honeypot Anti-Bot Trap:
+        // Real humans cannot see this field. If it has a value, an automated spam bot filled it!
+        if (websiteField && websiteField.value.trim().length > 0) {
+            console.warn("🛡️ Honeypot triggered! Automated bot submission blocked.");
+            userNameInput.value = '';
+            websiteField.value = '';
+            return; // Silently abort without sending any request to the database
+        }
+
         const rawValue = userNameInput.value;
         
         // Validate with Zod schema
