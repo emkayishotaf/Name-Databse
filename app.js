@@ -284,6 +284,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearError();
         const validatedName = validation.data;
         
+        // 2. Google reCAPTCHA v3 Token Generation:
+        let recaptchaToken = null;
+        if (typeof grecaptcha !== 'undefined' && SUPABASE_CONFIG.RECAPTCHA_SITE_KEY) {
+            try {
+                recaptchaToken = await grecaptcha.execute(SUPABASE_CONFIG.RECAPTCHA_SITE_KEY, { action: 'submit_name' });
+                console.log("🛡️ Google reCAPTCHA v3 token generated:", recaptchaToken.substring(0, 25) + "...");
+            } catch (recaptchaErr) {
+                console.warn("reCAPTCHA v3 execution notice:", recaptchaErr);
+            }
+        }
+
         // Reset input focus and values so the UI displays the newest DB name
         userNameInput.value = '';
         userNameInput.blur();

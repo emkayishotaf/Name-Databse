@@ -11,5 +11,8 @@ const SUPABASE_CONFIG = {
 
     // 2. Configure the exact database schema names to match your Supabase table:
     TABLE_NAME: "Customer Names", // Enter your Supabase table name here (e.g. "greetings")
-    COLUMN_NAME: "Name"      // Matches the capitalized "Name" column from your screenshot
+    COLUMN_NAME: "Name",      // Matches the capitalized "Name" column from your screenshot
+
+    // 3. Google reCAPTCHA v3 Site Key (Client-side / Public):
+    RECAPTCHA_SITE_KEY: "6LfCha4tAAAAAHtpvOviksQPKjEaVLMOPR2ZJfFg"
 };
