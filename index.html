@@ -37,12 +37,19 @@
 
                         <!-- Prompt Screen Form -->
                         <div class="prompt-view">
-                            <label for="user-name" class="monitor-label">What is your name:</label>
+                            <label class="monitor-label">Visitor Identity Terminal:</label>
                             
-                            <!-- Printed Name Output (just below the question) -->
+                            <!-- Printed Name & Profile Badge Output -->
                             <div class="greeting-display" id="greeting-display">
-                                <span class="hello-label">Hello</span>
-                                <span class="displayed-name wavy-underline" id="displayed-name">Guest</span>
+                                <div class="greeting-header-line">
+                                    <span class="hello-label">Hello</span>
+                                    <span class="displayed-name wavy-underline" id="displayed-name">Guest</span>
+                                </div>
+                                <div class="profile-badge-meta" id="profile-badge-meta">
+                                    <span class="badge-tag role-tag" id="displayed-role">Developer</span>
+                                    <span class="badge-tag age-tag" id="displayed-age">Age: --</span>
+                                    <span class="badge-tag gen-tag" id="displayed-gen">Cohort: --</span>
+                                </div>
                             </div>
 
                             <form id="greeting-form" class="monitor-form" novalidate>
@@ -52,6 +59,7 @@
                                     <input type="text" id="website-field" name="website_url" tabindex="-1" autocomplete="off">
                                 </div>
 
+                                <!-- 1. Primary Prompt Row (Submit button back in place!) -->
                                 <div class="terminal-input-row">
                                     <div class="terminal-input-wrapper" id="terminal-input-wrapper">
                                         <span class="terminal-prompt">&gt;</span>
@@ -61,6 +69,27 @@
                                         <span>Submit</span>
                                     </button>
                                 </div>
+
+                                <!-- 2. Secondary Attributes Toolbar (DOB & Role) -->
+                                <div class="terminal-secondary-bar">
+                                    <div class="sec-item">
+                                        <label for="user-dob" class="sec-label">DOB</label>
+                                        <input type="date" id="user-dob" name="dob" class="cyber-date-input">
+                                    </div>
+
+                                    <div class="sec-item">
+                                        <label for="user-role" class="sec-label">ROLE</label>
+                                        <select id="user-role" name="role" class="cyber-select">
+                                            <option value="Developer" selected>Developer</option>
+                                            <option value="Designer">Designer</option>
+                                            <option value="Cyberpunk Nomad">Cyberpunk Nomad</option>
+                                            <option value="Gamer">Gamer</option>
+                                            <option value="Data Scientist">Data Scientist</option>
+                                            <option value="Tech Enthusiast">Tech Enthusiast</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div class="terminal-error" id="terminal-error"></div>
                             </form>
                         </div>
@@ -122,13 +151,15 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Name</th>
+                                <th>Role</th>
+                                <th>DOB / Age</th>
                                 <th>Created At</th>
                             </tr>
                         </thead>
                         <tbody id="db-entries-list">
                             <!-- Populated dynamically -->
                             <tr class="empty-row">
-                                <td colspan="3">No names entered yet. Be the first!</td>
+                                <td colspan="5">No profiles logged yet. Be the first!</td>
                             </tr>
                         </tbody>
                     </table>

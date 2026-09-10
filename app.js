@@ -1,12 +1,21 @@
 /**
  * AuraGreet - Supabase & Local Sandbox Client
+ * Expanded Multi-Field Identity Profile with Zod Validation
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // DOM Elements
+    // DOM Elements - Inputs
     const userNameInput = document.getElementById('user-name');
-    const greetingDisplay = document.getElementById('greeting-display');
+    const userDobInput = document.getElementById('user-dob');
+    const userRoleInput = document.getElementById('user-role');
+    const websiteField = document.getElementById('website-field');
+    const greetingForm = document.getElementById('greeting-form');
+    
+    // DOM Elements - Display Badge
     const displayedName = document.getElementById('displayed-name');
+    const displayedRole = document.getElementById('displayed-role');
+    const displayedAge = document.getElementById('displayed-age');
+    const displayedGen = document.getElementById('displayed-gen');
     
     // Status Bar & Badge elements
     const statusIndicator = document.getElementById('status-indicator');
@@ -14,17 +23,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dbBadge = document.getElementById('db-badge');
     const supabaseHint = document.getElementById('supabase-hint');
     
-    // DB Log List
+    // DB Log List & Errors
     const dbEntriesList = document.getElementById('db-entries-list');
-    const greetingForm = document.getElementById('greeting-form');
     const terminalError = document.getElementById('terminal-error');
     const terminalInputWrapper = document.getElementById('terminal-input-wrapper');
-    const websiteField = document.getElementById('website-field');
 
     let supabaseClient = null;
     let isSupabaseActive = false;
     let localDatabase = JSON.parse(localStorage.getItem('aura_greetings') || '[]');
-    let latestDbName = null;
+    let latestVisitor = null;
 
     // -------------------------------------------------------------
     // Zod Schema Definition
@@ -32,25 +39,97 @@ document.addEventListener('DOMContentLoaded', async () => {
     const z = window.Zod?.z || window.z || window.Zod;
 
     // Fallback schema in case CDN is unreachable
-    const FallbackNameSchema = {
+    const FallbackVisitorSchema = {
         safeParse: (val) => {
-            if (typeof val !== 'string') return { success: false, error: { errors: [{ message: "Name must be a valid text string." }] } };
-            const trimmed = val.trim();
-            if (trimmed.length < 2) return { success: false, error: { errors: [{ message: "Name must be at least 2 characters long." }] } };
-            if (trimmed.length > 30) return { success: false, error: { errors: [{ message: "Name cannot exceed 30 characters." }] } };
-            if (!/^[a-zA-Z\s'-]+$/.test(trimmed)) return { success: false, error: { errors: [{ message: "Name can only contain letters, spaces, hyphens, and apostrophes." }] } };
-            return { success: true, data: trimmed };
+            const name = typeof val.name === 'string' ? val.name.trim() : '';
+            if (name.length < 2) return { success: false, error: { errors: [{ message: "Name must be at least 2 characters long." }] } };
+            if (name.length > 30) return { success: false, error: { errors: [{ message: "Name cannot exceed 30 characters." }] } };
+            if (!/^[a-zA-Z\s'-]+$/.test(name)) return { success: false, error: { errors: [{ message: "Name can only contain letters, spaces, hyphens, and apostrophes." }] } };
+
+            if (val.dob && val.dob.trim() !== '') {
+                const d = new Date(val.dob);
+                if (isNaN(d.getTime()) || d > new Date() || d < new Date('1900-01-01')) {
+                    return { success: false, error: { errors: [{ message: "Date of birth must be a valid date between 1900 and today." }] } };
+                }
+            }
+            return { 
+                success: true, 
+                data: {
+                    name,
+                    dob: val.dob || '',
+                    role: val.role || 'Developer'
+                }
+            };
         }
     };
 
-    // Declarative Zod Schema matching database constraints
-    const NameSchema = (typeof z !== 'undefined' && z?.string)
-        ? z.string({ required_error: "Name is required." })
-            .trim()
-            .min(2, "Name must be at least 2 characters long.")
-            .max(30, "Name cannot exceed 30 characters.")
-            .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens, and apostrophes.")
-        : FallbackNameSchema;
+    // Declarative Zod Schema validating profile fields
+    const VisitorProfileSchema = (typeof z !== 'undefined' && z?.object)
+        ? z.object({
+            name: z.string({ required_error: "Name is required." })
+                .trim()
+                .min(2, "Name must be at least 2 characters long.")
+                .max(30, "Name cannot exceed 30 characters.")
+                .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens, and apostrophes."),
+            dob: z.string().optional().refine(val => {
+                if (!val || val.trim() === '') return true;
+                const d = new Date(val);
+                if (isNaN(d.getTime())) return false;
+                const now = new Date();
+                const minYear = new Date('1900-01-01');
+                return d <= now && d >= minYear;
+            }, "Date of birth must be a valid date between 1900 and today."),
+            role: z.string().default("Developer")
+        })
+        : FallbackVisitorSchema;
+
+    // -------------------------------------------------------------
+    // Helper Calculations & UI Handlers
+    // -------------------------------------------------------------
+
+    function calculateAge(dobStr) {
+        if (!dobStr) return null;
+        const birthDate = new Date(dobStr);
+        if (isNaN(birthDate.getTime())) return null;
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age >= 0 ? age : null;
+    }
+
+    function getGeneration(dobStr) {
+        if (!dobStr) return null;
+        const year = new Date(dobStr).getFullYear();
+        if (isNaN(year)) return null;
+        if (year >= 2013) return "Gen Alpha";
+        if (year >= 1997) return "Gen Z";
+        if (year >= 1981) return "Millennial";
+        if (year >= 1965) return "Gen X";
+        if (year >= 1946) return "Boomer";
+        return "Traditionalist";
+    }
+
+
+    function updateBadgeDisplay(name, role, dob) {
+        displayedName.textContent = name || "Guest";
+        displayedRole.textContent = role || "Developer";
+
+        const age = calculateAge(dob);
+        const gen = getGeneration(dob);
+
+        if (age !== null && gen !== null) {
+            displayedAge.textContent = `Age: ${age}`;
+            displayedGen.textContent = gen;
+            displayedAge.style.display = 'inline-block';
+            displayedGen.style.display = 'inline-block';
+        } else {
+            displayedAge.style.display = 'none';
+            displayedGen.style.display = 'none';
+        }
+    }
 
     function showError(message) {
         if (terminalError) {
@@ -59,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (terminalInputWrapper) {
             terminalInputWrapper.classList.remove('input-error');
-            void terminalInputWrapper.offsetWidth; // Trigger reflow for animation restart
+            void terminalInputWrapper.offsetWidth; // Trigger reflow for shake restart
             terminalInputWrapper.classList.add('input-error');
         }
     }
@@ -74,7 +153,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // -------------------------------------------------------------
     // Initialize Database Connection
+    // -------------------------------------------------------------
     function initializeDB() {
         const hasCredentials = SUPABASE_CONFIG.URL && 
                                SUPABASE_CONFIG.URL !== "" && 
@@ -83,18 +164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (hasCredentials) {
             try {
-                // Initialize real Supabase client
                 supabaseClient = supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY);
                 isSupabaseActive = true;
                 
-                // Update UI status to Connected
                 statusIndicator.className = "status-indicator connected";
                 statusText.textContent = "SUPABASE: CONNECTED";
                 dbBadge.textContent = "Supabase DB";
                 dbBadge.style.backgroundColor = "rgba(62, 207, 142, 0.1)";
                 dbBadge.style.color = "var(--supabase-green)";
                 dbBadge.style.borderColor = "rgba(62, 207, 142, 0.2)";
-                supabaseHint.innerHTML = "Connected to Supabase! Names entered will sync with table <code class='code-file'>greetings</code> in real time.";
+                supabaseHint.innerHTML = "Connected to Supabase! Profiles entered will sync with table <code class='code-file'>Customer Names</code> in real time.";
             } catch (err) {
                 console.error("Supabase connection failed, falling back to local sandbox:", err);
                 setupLocalFallback("SUPABASE: CONNECTION ERROR");
@@ -115,15 +194,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         supabaseHint.innerHTML = "Running in sandbox mode. Enter your API credentials in <code class='code-file'>config.js</code> to connect a real database.";
     }
 
-    // Fetch and render the table logs (GET request to database)
+    // -------------------------------------------------------------
+    // Fetch and Render Database Logs (HTTP GET)
+    // -------------------------------------------------------------
     async function loadLogs() {
         let entries = [];
-        const tableName = SUPABASE_CONFIG.TABLE_NAME || 'greetings';
-        const columnName = SUPABASE_CONFIG.COLUMN_NAME || 'name';
+        const tableName = SUPABASE_CONFIG.TABLE_NAME || 'Customer Names';
+        const columnName = SUPABASE_CONFIG.COLUMN_NAME || 'Name';
         
         if (isSupabaseActive) {
             try {
-                // HTTP GET request to fetch recent rows from Supabase
                 const { data, error } = await supabaseClient
                     .from(tableName)
                     .select('*')
@@ -141,16 +221,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             entries = localDatabase;
         }
 
-        // Cache the latest name from the database
+        // Cache the latest visitor profile
         if (entries.length > 0) {
-            latestDbName = entries[0][columnName] || entries[0].name || null;
+            latestVisitor = entries[0];
         } else {
-            latestDbName = null;
+            latestVisitor = null;
         }
 
-        // For as long as there is a name in the database, display it unless the user is typing
+        // As long as the user is not actively drafting a new name, display latest profile
         if (userNameInput.value.trim().length === 0) {
-            displayedName.textContent = latestDbName || "Guest";
+            if (latestVisitor) {
+                const resolvedName = latestVisitor[columnName] || latestVisitor.name || 'Guest';
+                updateBadgeDisplay(resolvedName, latestVisitor.role, latestVisitor.dob);
+            } else {
+                updateBadgeDisplay("Guest", "Developer", null);
+            }
         }
 
         // Render to Table
@@ -159,65 +244,78 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (entries.length === 0) {
             dbEntriesList.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="3">No names entered yet. Be the first!</td>
+                    <td colspan="5">No profiles logged yet. Be the first!</td>
                 </tr>`;
             return;
         }
 
         entries.forEach(entry => {
-            const date = new Date(entry.created_at || entry.timestamp);
+            const date = new Date(entry.created_at || entry.timestamp || Date.now());
             const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
-            // Fall back to 'name' for local mocked database rows
-            const resolvedName = entry[columnName] || entry.name || '';
+            const resolvedName = entry[columnName] || entry.name || 'Anonymous';
+            const role = entry.role || 'Developer';
+            
+            let dobAgeText = '—';
+            if (entry.dob) {
+                const age = calculateAge(entry.dob);
+                const gen = getGeneration(entry.dob);
+                dobAgeText = `${entry.dob} ${age !== null ? `(${age}y, ${gen})` : ''}`;
+            }
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>#${entry.id.toString().substring(0, 6)}</td>
                 <td>${escapeHTML(resolvedName)}</td>
+                <td><span class="table-role-tag">${escapeHTML(role)}</span></td>
+                <td>${escapeHTML(dobAgeText)}</td>
                 <td>${timeStr}</td>
             `;
             dbEntriesList.appendChild(tr);
         });
     }
 
-    // Save Name to database / localstorage
-    async function saveName(name) {
-        if (!name || name.trim().length === 0) return null;
-        const cleanedName = name.trim();
-        const tableName = SUPABASE_CONFIG.TABLE_NAME || 'greetings';
-        const columnName = SUPABASE_CONFIG.COLUMN_NAME || 'name';
+    // -------------------------------------------------------------
+    // Save Visitor Profile to Database (HTTP POST)
+    // -------------------------------------------------------------
+    async function saveVisitor(visitorData) {
+        if (!visitorData || !visitorData.name) return;
+        const tableName = SUPABASE_CONFIG.TABLE_NAME || 'Customer Names';
+        const columnName = SUPABASE_CONFIG.COLUMN_NAME || 'Name';
 
         if (isSupabaseActive) {
             try {
                 const insertRow = {};
-                insertRow[columnName] = cleanedName;
+                insertRow[columnName] = visitorData.name;
+                insertRow['dob'] = visitorData.dob || null;
+                insertRow['role'] = visitorData.role || 'Developer';
 
-                // Insert into database (POST)
+                // Insert into Supabase (POST)
                 const { error } = await supabaseClient
                     .from(tableName)
                     .insert([insertRow]);
                 if (error) throw error;
             } catch (err) {
-                console.error("Failed to insert to Supabase, saving locally:", err);
-                saveLocally(cleanedName);
+                console.error("Failed to insert into Supabase, saving locally:", err);
+                saveLocally(visitorData);
             }
         } else {
-            saveLocally(cleanedName);
+            saveLocally(visitorData);
         }
 
-        // Reload lists via HTTP GET, which automatically updates latestDbName & displayedName!
+        // Re-fetch latest records via HTTP GET to hydrate screen badge and table
         await loadLogs();
     }
 
-    function saveLocally(name) {
+    function saveLocally(visitorData) {
         const newEntry = {
             id: Math.floor(Math.random() * 900000) + 100000,
-            name: name,
+            name: visitorData.name,
+            dob: visitorData.dob || null,
+            role: visitorData.role || 'Developer',
             created_at: new Date().toISOString()
         };
         localDatabase.unshift(newEntry);
-        // limit to 10 entries locally
         if (localDatabase.length > 10) {
             localDatabase.pop();
         }
@@ -225,9 +323,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return newEntry;
     }
 
-    // Helper: Escape HTML to prevent injection
     function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, 
+        return String(str).replace(/[&<>'"]/g, 
             tag => ({
                 '&': '&amp;',
                 '<': '&lt;',
@@ -239,70 +336,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // -------------------------------------------------------------
-    // Live Input Event Listeners
+    // Real-Time Event Listeners
     // -------------------------------------------------------------
 
-    // While user is typing a new name, show what they type.
-    // If input is cleared, revert back to the latest name from the database.
+    // 1. Date of Birth: Dynamically updates age & generation on the fly
+    userDobInput.addEventListener('input', (e) => {
+        clearError();
+        const dobVal = e.target.value;
+        const currentName = userNameInput.value.trim() || (latestVisitor ? (latestVisitor[SUPABASE_CONFIG.COLUMN_NAME || 'Name'] || latestVisitor.name) : 'Guest');
+        updateBadgeDisplay(currentName, userRoleInput.value, dobVal);
+    });
+
+    // 2. Role Dropdown: Updates role badge live
+    userRoleInput.addEventListener('change', (e) => {
+        const currentName = userNameInput.value.trim() || (latestVisitor ? (latestVisitor[SUPABASE_CONFIG.COLUMN_NAME || 'Name'] || latestVisitor.name) : 'Guest');
+        updateBadgeDisplay(currentName, e.target.value, userDobInput.value);
+    });
+
+    // 3. Name Field: Live typing preview; reverts if cleared
     userNameInput.addEventListener('input', (e) => {
-        clearError(); // Dismiss any previous validation errors as user types
+        clearError();
         const textValue = e.target.value;
         if (textValue.trim().length === 0) {
-            displayedName.textContent = latestDbName || "Guest";
+            const fallbackName = latestVisitor ? (latestVisitor[SUPABASE_CONFIG.COLUMN_NAME || 'Name'] || latestVisitor.name) : 'Guest';
+            updateBadgeDisplay(fallbackName, userRoleInput.value, userDobInput.value);
         } else {
-            displayedName.textContent = textValue;
+            updateBadgeDisplay(textValue, userRoleInput.value, userDobInput.value);
         }
     });
 
-    // Form submission triggers Honeypot trap check, Zod validation, DB insert (POST), then GETs latest name
+    // 4. Form Submission: Honeypot trap -> Zod validation -> reCAPTCHA v3 -> DB POST -> DB GET
     greetingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         // 1. Honeypot Anti-Bot Trap:
-        // Real humans cannot see this field. If it has a value, an automated spam bot filled it!
         if (websiteField && websiteField.value.trim().length > 0) {
             console.warn("🛡️ Honeypot triggered! Automated bot submission blocked.");
             userNameInput.value = '';
             websiteField.value = '';
-            return; // Silently abort without sending any request to the database
-        }
-
-        const rawValue = userNameInput.value;
-        
-        // Validate with Zod schema
-        const validation = NameSchema.safeParse(rawValue);
-        
-        if (!validation.success) {
-            // Extract the first error message formatted by Zod
-            const errorMsg = validation.error.errors[0]?.message || "Invalid name entered.";
-            showError(errorMsg);
-            userNameInput.focus();
             return;
         }
 
-        // Passed Zod validation! Clear any errors and use the trimmed, sanitized name
-        clearError();
-        const validatedName = validation.data;
+        // Gather profile fields
+        const formData = {
+            name: userNameInput.value,
+            dob: userDobInput.value,
+            role: userRoleInput.value
+        };
         
-        // 2. Google reCAPTCHA v3 Token Generation:
+        // 2. Validate with Zod schema
+        const validation = VisitorProfileSchema.safeParse(formData);
+        
+        if (!validation.success) {
+            const errorMsg = validation.error.errors[0]?.message || "Invalid input entered.";
+            showError(errorMsg);
+            return;
+        }
+
+        clearError();
+        const validatedProfile = validation.data;
+        
+        // 3. Google reCAPTCHA v3 Token Generation
         let recaptchaToken = null;
         if (typeof grecaptcha !== 'undefined' && SUPABASE_CONFIG.RECAPTCHA_SITE_KEY) {
             try {
-                recaptchaToken = await grecaptcha.execute(SUPABASE_CONFIG.RECAPTCHA_SITE_KEY, { action: 'submit_name' });
+                recaptchaToken = await grecaptcha.execute(SUPABASE_CONFIG.RECAPTCHA_SITE_KEY, { action: 'submit_visitor' });
                 console.log("🛡️ Google reCAPTCHA v3 token generated:", recaptchaToken.substring(0, 25) + "...");
             } catch (recaptchaErr) {
                 console.warn("reCAPTCHA v3 execution notice:", recaptchaErr);
             }
         }
 
-        // Reset input focus and values so the UI displays the newest DB name
+        // Reset input fields
         userNameInput.value = '';
+        userDobInput.value = '';
         userNameInput.blur();
 
-        // Save to DB (POST), which triggers loadLogs() to GET the latest name
-        await saveName(validatedName);
+        // 4. Save to Database (POST), which subsequently calls loadLogs() (GET) to hydrate
+        await saveVisitor(validatedProfile);
         
-        // Trigger a screen flash effect on monitor bezel/screen
+        // 5. Trigger Monitor Screen Flash Effect
         const screen = document.querySelector('.monitor-screen');
         screen.style.transition = 'none';
         screen.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
@@ -316,6 +429,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Run Setup
     initializeDB();
     
-    // On load, execute HTTP GET query to fetch latest name from database and render it
+    // Initial fetch to load the latest visitor profile and render database log
     await loadLogs();
 });

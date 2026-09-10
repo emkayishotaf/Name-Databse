@@ -39,7 +39,22 @@ const NewCustomerInputSchema = registry.register(
       .openapi({
         description: "Person's name (letters, spaces, hyphens, and apostrophes only).",
         example: "Kelvin"
-      })
+      }),
+    dob: z.string().optional().openapi({
+      description: "Date of birth (YYYY-MM-DD).",
+      example: "2000-05-15"
+    }),
+    role: z.enum([
+      "Developer",
+      "Designer",
+      "Cyberpunk Nomad",
+      "Gamer",
+      "Data Scientist",
+      "Tech Enthusiast"
+    ]).default("Developer").openapi({
+      description: "User role or archetype.",
+      example: "Developer"
+    })
   }).openapi('NewCustomerInput')
 );
 
@@ -48,6 +63,8 @@ const CustomerEntrySchema = registry.register(
   z.object({
     id: z.number().int().openapi({ description: 'Auto-increment primary key', example: 19 }),
     Name: z.string().openapi({ description: "Person's name", example: 'Kelvin' }),
+    dob: z.string().nullable().optional().openapi({ description: 'Date of birth', example: '2000-05-15' }),
+    role: z.string().optional().openapi({ description: 'User role', example: 'Developer' }),
     created_at: z.string().datetime().openapi({ description: 'Commit timestamp', example: '2026-09-04T10:43:25.000Z' })
   }).openapi('CustomerEntry')
 );
