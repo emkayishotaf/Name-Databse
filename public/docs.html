@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraGreet API Documentation | Swagger UI</title>
+    <!-- Official Swagger UI CSS from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            background: #090b11;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        /* Clean Navigation Header */
+        .swagger-nav-header {
+            background: #111622;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .swagger-nav-header a {
+            color: #06b6d4;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        .swagger-nav-header a:hover {
+            color: #3ecf8e;
+        }
+        .swagger-nav-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #ffffff;
+        }
+        /* Custom tweaks to fit our dark monitor aesthetic */
+        .swagger-ui .topbar {
+            display: none;
+        }
+        .swagger-ui {
+            filter: invert(88%) hue-rotate(180deg);
+            padding-bottom: 60px;
+        }
+        .swagger-ui .wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar with Back to App link -->
+    <header class="swagger-nav-header">
+        <span class="swagger-nav-title">AuraGreet API Explorer</span>
+        <a href="./index.html">← Back to Virtual Monitor</a>
+    </header>
+
+    <div id="swagger-ui"></div>
+
+    <!-- Official Swagger UI JS Bundle -->
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    
+    <!-- Load config for automatic Supabase Auth in Swagger -->
+    <script src="config.js"></script>
+
+    <script>
+        window.onload = () => {
+            window.ui = SwaggerUIBundle({
+                url: './openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                layout: "BaseLayout",
+                requestInterceptor: (req) => {
+                    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.ANON_KEY) {
+                        req.headers['apikey'] = req.headers['apikey'] || SUPABASE_CONFIG.ANON_KEY;
+                        req.headers['Authorization'] = req.headers['Authorization'] || ('Bearer ' + SUPABASE_CONFIG.ANON_KEY);
+                    }
+                    return req;
+                }
+            });
+        };
+    </script>
+</body>
+</html>

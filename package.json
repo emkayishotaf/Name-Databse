@@ -1,14 +1,38 @@
 {
   "name": "name-greeter",
   "version": "1.0.0",
-  "description": "AuraGreet Front-End connected to Supabase PostgreSQL with Zod validation",
+  "description": "AuraGreet Front-End connected to Supabase PostgreSQL with Angular and Zod",
   "type": "module",
   "scripts": {
+    "ng": "ng",
+    "start": "ng serve --port 8000",
+    "build": "ng build --base-href /name-greeter/",
+    "build:local": "ng build",
+    "watch": "ng build --watch --configuration development",
     "generate-docs": "node generate-docs.mjs"
   },
-  "devDependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.3.0",
-    "yaml": "^2.6.0",
+  "dependencies": {
+    "@angular/animations": "^18.2.0",
+    "@angular/common": "^18.2.0",
+    "@angular/compiler": "^18.2.0",
+    "@angular/core": "^18.2.0",
+    "@angular/forms": "^18.2.0",
+    "@angular/platform-browser": "^18.2.0",
+    "@angular/platform-browser-dynamic": "^18.2.0",
+    "@angular/router": "^18.2.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.6.3",
+    "zone.js": "~0.14.10",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^18.2.0",
+    "@angular/cli": "^18.2.0",
+    "@angular/compiler-cli": "^18.2.0",
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@types/node": "^20.14.0",
+    "typescript": "~5.5.4",
+    "yaml": "^2.6.0"
   }
 }

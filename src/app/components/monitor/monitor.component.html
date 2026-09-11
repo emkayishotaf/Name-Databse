@@ -1,0 +1,99 @@
+<div class="computer-monitor">
+    <!-- Monitor Bezel Top Camera -->
+    <div class="monitor-bezel-top">
+        <div class="camera-lens"></div>
+    </div>
+
+    <!-- Inner CRT Screen -->
+    <div class="monitor-screen" [class.screen-flash]="isScreenFlashing()">
+        <div class="screen-glow-fx"></div>
+        <div class="screen-scanlines"></div>
+
+        <div class="screen-content">
+            <!-- Top Header Status -->
+            <div class="screen-status-bar">
+                <span class="status-indicator" [ngClass]="supabaseService.connectionStatus()"></span>
+                <span class="status-text">{{ supabaseService.statusLabel() }}</span>
+                <a href="./docs.html" class="status-docs-link" title="Open interactive Swagger API documentation">Swagger API Docs ↗</a>
+            </div>
+
+            <!-- Prompt Screen Form -->
+            <div class="prompt-view">
+                <label class="monitor-label">Visitor Identity Terminal:</label>
+                
+                <!-- Printed Name & Profile Badge Output -->
+                <div class="greeting-display">
+                    <div class="greeting-header-line">
+                        <span class="hello-label">Hello</span>
+                        <span class="displayed-name wavy-underline">{{ displayedName() }}</span>
+                    </div>
+                    <div class="profile-badge-meta">
+                        <span class="badge-tag role-tag">{{ displayedRole() }}</span>
+                        @if (ageAndCohort(); as meta) {
+                            <span class="badge-tag age-tag">Age: {{ meta.age }}</span>
+                            <span class="badge-tag gen-tag">{{ meta.cohort }}</span>
+                        }
+                    </div>
+                </div>
+
+                <form [formGroup]="greetingForm" (ngSubmit)="onSubmit()" class="monitor-form" novalidate>
+                    <!-- Honeypot Anti-Bot Trap -->
+                    <div class="hp-trap" aria-hidden="true">
+                        <label for="website-field">Leave blank</label>
+                        <input type="text" id="website-field" formControlName="website_url" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <!-- 1. Primary Prompt Row (Inline Submit) -->
+                    <div class="terminal-input-row">
+                        <div class="terminal-input-wrapper" [class.input-error]="errorMessage()" [class.shake-anim]="isShaking()">
+                            <span class="terminal-prompt">&gt;</span>
+                            <input 
+                                type="text" 
+                                id="user-name" 
+                                formControlName="name" 
+                                required 
+                                autocomplete="off" 
+                                placeholder="type name..." 
+                                maxlength="30"
+                            >
+                        </div>
+                        <button type="submit" id="submit-btn" class="terminal-submit-btn">
+                            <span>Submit</span>
+                        </button>
+                    </div>
+
+                    <!-- 2. Secondary Attributes Toolbar (DOB & Role) -->
+                    <div class="terminal-secondary-bar">
+                        <div class="sec-item">
+                            <label for="user-dob" class="sec-label">DOB</label>
+                            <input type="date" id="user-dob" formControlName="dob" class="cyber-date-input">
+                        </div>
+
+                        <div class="sec-item">
+                            <label for="user-role" class="sec-label">ROLE</label>
+                            <select id="user-role" formControlName="role" class="cyber-select">
+                                <option value="Developer">Developer</option>
+                                <option value="Designer">Designer</option>
+                                <option value="Cyberpunk Nomad">Cyberpunk Nomad</option>
+                                <option value="Gamer">Gamer</option>
+                                <option value="Data Scientist">Data Scientist</option>
+                                <option value="Tech Enthusiast">Tech Enthusiast</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @if (errorMessage()) {
+                        <div class="terminal-error visible">
+                            ⚠ {{ errorMessage() }}
+                        </div>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitor Bezel Controls -->
+    <div class="monitor-bezel-bottom">
+        <div class="power-led animate-pulse"></div>
+    </div>
+</div>

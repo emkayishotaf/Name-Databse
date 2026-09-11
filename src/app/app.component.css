@@ -1,0 +1,117 @@
+/* Main Stage */
+.main-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 640px;
+}
+
+.retro-setup-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Monitor Stand Neck */
+.monitor-stand-neck {
+    width: 65px;
+    height: 38px;
+    background: linear-gradient(to right, #0f131a, #1f2737, #0f131a);
+    border-left: 2px solid rgba(255, 255, 255, 0.05);
+    border-right: 2px solid rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Monitor Stand Base */
+.monitor-stand-base {
+    width: 190px;
+    height: 12px;
+    background: #181d28;
+    border-radius: 8px 8px 3px 3px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.7);
+    margin-bottom: 8px;
+}
+
+/* Desktop Peripherals (Keyboard & Mouse) */
+.desktop-accessories {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 6px;
+    margin-bottom: 25px;
+    width: 100%;
+}
+
+/* Keyboard Mockup */
+.keyboard-mock {
+    background: #151922;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 6px 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    transform: perspective(300px) rotateX(20deg);
+}
+
+.keyboard-keys {
+    display: grid;
+    grid-template-columns: repeat(6, 12px);
+    gap: 4px;
+}
+
+.keyboard-keys span {
+    width: 12px;
+    height: 10px;
+    background: #202634;
+    border-radius: 2px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.8);
+    display: block;
+}
+
+/* Mouse Mockup */
+.mouse-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.mouse-cable {
+    width: 2px;
+    height: 14px;
+    background: #252b3b;
+    margin-bottom: -2px;
+}
+
+.mouse-mock {
+    width: 28px;
+    height: 42px;
+    background: #151922;
+    border-radius: 14px 14px 12px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: 6px;
+}
+
+.mouse-scroll {
+    width: 4px;
+    height: 8px;
+    background: var(--accent-cyan);
+    border-radius: 2px;
+    box-shadow: 0 0 6px var(--accent-cyan);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 500px) {
+    .desktop-accessories,
+    .monitor-stand-neck,
+    .monitor-stand-base {
+        display: none;
+    }
+}

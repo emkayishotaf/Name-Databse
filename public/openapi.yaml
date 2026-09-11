@@ -1,0 +1,170 @@
+openapi: 3.1.0
+info:
+  title: AuraGreet Customer Names API
+  version: 1.0.0
+  description: REST API specification generated automatically from Zod schemas.
+servers:
+  - url: https://tibxvvjsgkyurxepdnsh.supabase.co/rest/v1
+    description: Supabase Cloud Production Server
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase Public Anon Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Bearer Token
+  schemas:
+    NewCustomerInput:
+      type: object
+      properties:
+        Name:
+          type: string
+          minLength: 2
+          maxLength: 30
+          pattern: ^[a-zA-Z\s'-]+$
+          description: Person's name (letters, spaces, hyphens, and apostrophes only).
+          example: Kelvin
+        dob:
+          type: string
+          description: Date of birth (YYYY-MM-DD).
+          example: "2000-05-15"
+        role:
+          type: string
+          enum:
+            - Developer
+            - Designer
+            - Cyberpunk Nomad
+            - Gamer
+            - Data Scientist
+            - Tech Enthusiast
+          default: Developer
+          description: User role or archetype.
+          example: Developer
+      required:
+        - Name
+    CustomerEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Auto-increment primary key
+          example: 19
+        Name:
+          type: string
+          description: Person's name
+          example: Kelvin
+        dob:
+          type: string
+          nullable: true
+          description: Date of birth
+          example: "2000-05-15"
+        role:
+          type: string
+          description: User role
+          example: Developer
+        created_at:
+          type: string
+          format: date-time
+          description: Commit timestamp
+          example: 2026-09-04T10:43:25.000Z
+      required:
+        - id
+        - Name
+        - created_at
+    ApiError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: new row for relation "Customer Names" violates check constraint
+      required:
+        - message
+  parameters: {}
+paths:
+  /Customer%20Names:
+    get:
+      summary: Get Recent Greeted Names
+      description: Retrieves a list of recently logged customer names ordered by
+        creation date.
+      operationId: getRecentNames
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - schema:
+            type: string
+            default: "*"
+            description: Columns to select
+          required: false
+          name: select
+          in: query
+        - schema:
+            type: string
+            default: created_at.desc
+            description: Ordering criteria
+          required: false
+          name: order
+          in: query
+        - schema:
+            type: string
+            default: 10
+            description: Maximum rows to return
+          required: false
+          name: limit
+          in: query
+      responses:
+        "200":
+          description: Successfully retrieved the list of names.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerEntry"
+        "401":
+          description: Missing or invalid Supabase Anon Key.
+    post:
+      summary: Insert a New Customer Name
+      description: Validates and writes a new visitor name into the database.
+      operationId: insertCustomerName
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - schema:
+            type: string
+            default: return=representation
+            description: Instructs the server to return the newly inserted row.
+          required: false
+          name: Prefer
+          in: header
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/NewCustomerInput"
+      responses:
+        "201":
+          description: Name created successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerEntry"
+        "400":
+          description: Bad Request (Failed database constraint or validation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Missing or invalid Supabase Anon Key.
+webhooks: {}

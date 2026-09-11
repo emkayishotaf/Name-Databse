@@ -1,0 +1,60 @@
+<section class="supabase-panel glassmorphic">
+    <header class="supabase-header">
+        <div class="supabase-logo">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" class="supabase-icon">
+                <path d="M12 2L2 13h9v9l10-11h-9z" />
+            </svg>
+            <h2>supabase</h2>
+        </div>
+        <span 
+            class="database-badge" 
+            [class.connected]="supabaseService.connectionStatus() === 'connected'"
+            [class.mocked]="supabaseService.connectionStatus() !== 'connected'"
+        >
+            {{ supabaseService.connectionStatus() === 'connected' ? 'Supabase DB' : 'Local Database' }}
+        </span>
+    </header>
+    
+    <div class="supabase-status-info">
+        <p>
+            @if (supabaseService.connectionStatus() === 'connected') {
+                Connected to Supabase! Profiles entered sync with table <code class="code-file">Customer Names</code> in real time.
+            } @else {
+                Running in sandbox mode. Enter your API credentials in <code class="code-file">environment.ts</code> to connect a real database.
+            }
+        </p>
+    </div>
+
+    <!-- Log Entries List -->
+    <div class="entries-log">
+        <h3>Greeted Users Database Log:</h3>
+        <div class="log-table-container">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>DOB / Age</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (entry of supabaseService.visitors(); track entry.id) {
+                        <tr>
+                            <td>#{{ ('' + entry.id).substring(0, 6) }}</td>
+                            <td>{{ entry.Name }}</td>
+                            <td><span class="table-role-tag">{{ entry.role || 'Developer' }}</span></td>
+                            <td>{{ formatDobAge(entry.dob) }}</td>
+                            <td>{{ formatTime(entry.created_at) }}</td>
+                        </tr>
+                    } @empty {
+                        <tr class="empty-row">
+                            <td colspan="5">No profiles logged yet. Be the first!</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
